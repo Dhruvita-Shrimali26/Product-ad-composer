@@ -328,48 +328,64 @@ def generate_image_prompt_hybrid(
 
 def add_branding_overlay(image: Image.Image, brand_name: str, slogan: str) -> Image.Image:
     """Adds a luxury-grade, semi-transparent bar at the bottom with centered Brand and Slogan."""
+    import matplotlib
+    import os
     
     # Clone image to avoid modifying original
     img = image.copy().convert("RGBA")
     width, height = img.size
     
-    # Scaled bar height (15% of the image)
-    bar_height = int(height * 0.15)
+    # Scaled bar height (Increased to 20% for much better visibility)
+    bar_height = int(height * 0.20)
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
     
-    # Semi-transparent black bar (slightly darker for better contrast)
-    draw.rectangle([0, height - bar_height, width, height], fill=(0, 0, 0, 210))
+    # Darker semi-transparent black bar for maximum text contrast
+    draw.rectangle([0, height - bar_height, width, height], fill=(0, 0, 0, 220))
     
-    # Font setup (Robust Search for Linux/Cloud and Windows)
-    font_paths = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",       # Linux (Streamlit Cloud)
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", # Linux Fallback
-        "arialbd.ttf",                      # Windows Bold
-        "DejaVuSans-Bold.ttf",              # Local
-        "arial.ttf"                         # Last resort
-    ]
+    # Robust Font Strategy — Use Matplotlib Bundled Fonts (Always present on Streamlit)
+    brand_size = int(bar_height * 0.45)    # Large brand name
+    slogan_size = int(bar_height * 0.25)   # Very readable slogan
     
-    brand_size = int(bar_height * 0.40)    # Increased for better visibility
-    slogan_size = int(bar_height * 0.22)   # Increased
+    font_path_bold = None
+    font_path_reg = None
     
-    brand_font = None
-    slogan_font = None
-    
-    for path in font_paths:
-        try:
-            brand_font = ImageFont.truetype(path, brand_size)
-            # Try to get the regular/unbold version for slogan if possible
-            reg_path = path.replace("-Bold", "").replace("bd", "")
-            try:
-                slogan_font = ImageFont.truetype(reg_path, slogan_size)
-            except:
-                slogan_font = ImageFont.truetype(path, slogan_size)
-            break
-        except (IOError, OSError):
-            continue
+    try:
+        mpl_font_base = os.path.join(matplotlib.get_data_path(), "fonts", "ttf")
+        possible_bold = os.path.join(mpl_font_base, "DejaVuSans-Bold.ttf")
+        possible_reg = os.path.join(mpl_font_base, "DejaVuSans.ttf")
+        
+        if os.path.exists(possible_bold):
+            font_path_bold = possible_bold
+        if os.path.exists(possible_reg):
+            font_path_reg = possible_reg
+    except:
+        pass
+
+    # Fallback paths if above search fails
+    if not font_path_bold:
+        fallback_paths = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "arialbd.ttf"
+        ]
+        for p in fallback_paths:
+            if os.path.exists(p):
+                font_path_bold = p
+                break
+
+    try:
+        if font_path_bold:
+            brand_font = ImageFont.truetype(font_path_bold, brand_size)
+        else:
+            brand_font = ImageFont.load_default()
             
-    if not brand_font:
+        if font_path_reg:
+            slogan_font = ImageFont.truetype(font_path_reg, slogan_size)
+        elif font_path_bold:
+            slogan_font = ImageFont.truetype(font_path_bold, slogan_size)
+        else:
+            slogan_font = ImageFont.load_default()
+    except:
         brand_font = ImageFont.load_default()
         slogan_font = ImageFont.load_default()
 
@@ -382,7 +398,7 @@ def add_branding_overlay(image: Image.Image, brand_name: str, slogan: str) -> Im
         brand_w, brand_h = draw.textsize(brand_text, font=brand_font)
     
     draw.text(
-        ((width - brand_w) // 2, height - bar_height + (bar_height // 5)),
+        ((width - brand_w) // 2, height - bar_height + (bar_height // 6)),
         brand_text,
         font=brand_font,
         fill=(255, 255, 255, 255)
@@ -396,7 +412,7 @@ def add_branding_overlay(image: Image.Image, brand_name: str, slogan: str) -> Im
         slogan_w, slogan_h = draw.textsize(slogan, font=slogan_font)
     
     draw.text(
-        ((width - slogan_w) // 2, height - bar_height + (bar_height // 1.7)),
+        ((width - slogan_w) // 2, height - bar_height + (bar_height // 1.6)),
         slogan,
         font=slogan_font,
         fill=(255, 255, 255, 230)
