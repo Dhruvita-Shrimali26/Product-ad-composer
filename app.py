@@ -87,11 +87,24 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     .ad-card {
-        padding: 20px;
+        padding: 24px;
         border-radius: 12px;
         background-color: white;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
+        color: #111827 !important; /* Force dark text for readability in Dark Mode */
+    }
+    .ad-card h3 {
+        color: #4F46E5 !important;
+        margin-top: 0;
+    }
+    .ad-card p {
+        color: #374151 !important;
+        line-height: 1.6;
+    }
+    .ad-card hr {
+        margin: 1rem 0;
+        border-color: #f3f4f6;
     }
     .action-button {
         display: inline-flex;
@@ -371,40 +384,50 @@ def apply_branding_branding(image_bytes: bytes, brand: str, slogan: str) -> byte
 
 def generate_hf_image(api_key: str, prompt: str) -> bytes | None:
     """
-    Call Hugging Face's FLUX.1 Schnell Inference API to generate an image.
-    Returns the raw image bytes on success, or None on failure.
+    Call Hugging Face's Image Inference API with multiple fallbacks.
+    If the primary model (FLUX) is out of quota (402), it tries secondary models.
     """
     headers = {
         "Authorization": f"Bearer {api_key.strip()}",
         "Content-Type": "application/json",
     }
-    # Adding a random seed ensures 'Regenerate' gives a new image every time
     payload = {
         "inputs": prompt,
         "parameters": {"seed": random.randint(1, 1000000)}
     }
 
+    # List of models to try in order of quality
+    # (Display Name, API URL)
     endpoints = [
-        "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-        "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
+        ("FLUX.1 🔥", "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"),
+        ("Stable Diffusion XL 🚀", "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"),
+        ("SD v1.5 (Reliable) 🛡️", "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"),
     ]
 
-    for url in endpoints:
+    for name, url in endpoints:
         try:
-            logger.info("Attempting image generation at: %s", url)
+            logger.info("Attempting image generation with %s at: %s", name, url)
             response = requests.post(url, headers=headers, json=payload, timeout=120)
 
             if response.status_code == 200:
-                logger.info("Image generated successfully at: %s", url)
+                logger.info("Image generated successfully using %s", name)
+                # Show which model was used in the UI for transparency
+                st.toast(f"✅ Generated using {name}", icon="🎨")
                 return response.content
 
-            error_msg = response.json().get("error", "") if response.text.startswith("{") else response.text
-            logger.warning("Failed at %s: %s — %s", url, response.status_code, error_msg)
+            # Handle Quota / Credit errors (402/429) specifically
+            if response.status_code in [402, 429]:
+                st.warning(f"⚠️ {name} quota full or too busy. Trying fallback model...")
+                continue
+            
+            error_data = response.json() if response.text.startswith("{") else {}
+            error_msg = error_data.get("error", response.text)
+            logger.warning("Failed at %s: %s — %s", name, response.status_code, error_msg)
 
         except Exception as e:
-            logger.warning("Error connecting to %s: %s", url, e)
+            logger.warning("Error connecting to %s: %s", name, e)
 
-    st.error("🚨 All image generation endpoints failed. Please check your API key and quota.")
+    st.error("🚨 All image generation models failed. Please check your API key or try again after 24 hours.")
     return None
 
 
@@ -510,12 +533,29 @@ with st.sidebar:
     st.header("📦 Product Selection")
 
     if df is not None:
-        product_list = sorted(df["product_name"].unique().tolist())
+        # Optimization: Limit to 5,000 unique products for better selectbox speed
+        # Sort first, then slice to ensure numerical (0-9) and alphabetical (A-Z) order is preserved.
+        all_products = df["product_name"].unique().tolist()
+        product_list = sorted(all_products)[:5000] 
+        
         selected_name = st.selectbox(
             "Choose Product from Dataset",
             product_list,
-            help="Begin typing to search...",
+            help="Showing top 5,000 items for faster performance.",
         )
+
+        # --- State Sync Logic ---
+        # If the product changed, clear the generated content to avoid confusion
+        if "last_selected_product" not in st.session_state:
+            st.session_state.last_selected_product = selected_name
+
+        if st.session_state.last_selected_product != selected_name:
+            st.session_state.ad_content = None
+            st.session_state.image_prompt = None
+            st.session_state.generated_image = None
+            st.session_state.last_selected_product = selected_name
+            st.rerun() # Refresh immediately to clear the UI
+
         selected_row = df[df["product_name"] == selected_name].iloc[0]
         product_description = selected_row.get("description", "")
         category_default = selected_row.get("main_category", "General")
@@ -691,9 +731,9 @@ if st.session_state.ad_content:
         st.subheader("🖼️ Ad Visualization")
         custom_prompt = st.text_area(
             "Refine Visual Prompt (LLM-generated):",
-            value=st.session_state.image_prompt,
+            value=st.session_state.image_prompt if st.session_state.image_prompt else "Choose product and click Step 1...",
             height=140,
-            key="custom_prompt_input"
+            key=f"prompt_input_{selected_name.replace(' ', '_')}" # Force refresh when product changes
         )
 
         if st.button("Step 2: Generate Visual (FLUX.1) 🚀"):
