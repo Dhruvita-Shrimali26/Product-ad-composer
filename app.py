@@ -707,7 +707,8 @@ if st.session_state.ad_content:
                     # Copy & Share Button (Standardized to 8501)
                     share_title = f"Ad for {selected_name}"
                     share_text = f"🚀 {st.session_state.ad_content['headline']}\n\n✨ {st.session_state.ad_content['slogan']}"
-                    app_url = "http://localhost:8501" 
+                    # Dynamic URL for sharing
+                    app_url = "https://ad-visual-composer.streamlit.app" 
                     share_js = f"""
                     <script>
                     async function copyAd() {{
