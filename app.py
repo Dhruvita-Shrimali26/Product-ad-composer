@@ -333,33 +333,56 @@ def add_branding_overlay(image: Image.Image, brand_name: str, slogan: str) -> Im
     img = image.copy().convert("RGBA")
     width, height = img.size
     
-    # Scaled bar height (18% of the image)
-    bar_height = int(height * 0.18)
+    # Scaled bar height (15% of the image)
+    bar_height = int(height * 0.15)
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
     
-    # Semi-transparent black bar
-    draw.rectangle([0, height - bar_height, width, height], fill=(0, 0, 0, 180))
+    # Semi-transparent black bar (slightly darker for better contrast)
+    draw.rectangle([0, height - bar_height, width, height], fill=(0, 0, 0, 210))
     
-    # Font setup
-    try:
-        # High visibility fonts
-        brand_font = ImageFont.truetype("arialbd.ttf", int(bar_height * 0.28))
-        slogan_font = ImageFont.truetype("arial.ttf", int(bar_height * 0.20))
-    except (IOError, OSError):
+    # Font setup (Robust Search for Linux/Cloud and Windows)
+    font_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",       # Linux (Streamlit Cloud)
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", # Linux Fallback
+        "arialbd.ttf",                      # Windows Bold
+        "DejaVuSans-Bold.ttf",              # Local
+        "arial.ttf"                         # Last resort
+    ]
+    
+    brand_size = int(bar_height * 0.40)    # Increased for better visibility
+    slogan_size = int(bar_height * 0.22)   # Increased
+    
+    brand_font = None
+    slogan_font = None
+    
+    for path in font_paths:
+        try:
+            brand_font = ImageFont.truetype(path, brand_size)
+            # Try to get the regular/unbold version for slogan if possible
+            reg_path = path.replace("-Bold", "").replace("bd", "")
+            try:
+                slogan_font = ImageFont.truetype(reg_path, slogan_size)
+            except:
+                slogan_font = ImageFont.truetype(path, slogan_size)
+            break
+        except (IOError, OSError):
+            continue
+            
+    if not brand_font:
         brand_font = ImageFont.load_default()
         slogan_font = ImageFont.load_default()
 
-    # Draw Brand (Uppercase)
+    # Draw Brand (Uppercase & bright white)
     brand_text = str(brand_name).upper()
     try:
         b_left, b_top, b_right, b_bottom = draw.textbbox((0, 0), brand_text, font=brand_font)
         brand_w, brand_h = b_right - b_left, b_bottom - b_top
-    except AttributeError: # Fallback for older Pillow
+    except AttributeError:
         brand_w, brand_h = draw.textsize(brand_text, font=brand_font)
     
     draw.text(
-        ((width - brand_w) // 2, height - bar_height + (bar_height // 4)),
+        ((width - brand_w) // 2, height - bar_height + (bar_height // 5)),
         brand_text,
         font=brand_font,
         fill=(255, 255, 255, 255)
@@ -373,10 +396,10 @@ def add_branding_overlay(image: Image.Image, brand_name: str, slogan: str) -> Im
         slogan_w, slogan_h = draw.textsize(slogan, font=slogan_font)
     
     draw.text(
-        ((width - slogan_w) // 2, height - bar_height + (bar_height // 1.8)),
+        ((width - slogan_w) // 2, height - bar_height + (bar_height // 1.7)),
         slogan,
         font=slogan_font,
-        fill=(255, 255, 255, 220)
+        fill=(255, 255, 255, 230)
     )
     
     return Image.alpha_composite(img, overlay).convert("RGB")
