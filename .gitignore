@@ -1,0 +1,68 @@
+# ============================================================
+# SECRETS — NEVER commit API keys or credentials
+# ============================================================
+.env
+.env.local
+.env.*.local
+
+# ============================================================
+# DATA FILES — Too large for git, store in cloud storage
+# ============================================================
+*.csv
+# Exception: We NEED the cleaned product data for the app to function
+!notebooks/cleaned_product_data.csv
+*.json.gz
+*.parquet
+
+# ============================================================
+# GENERATED OUTPUTS — Test artifacts, generated images
+# ============================================================
+*.jpg
+*.jpeg
+*.png
+*.gif
+test_out.*
+
+# ============================================================
+# PYTHON — Bytecode and cache
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ============================================================
+# VIRTUAL ENVIRONMENTS
+# ============================================================
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# ============================================================
+# JUPYTER NOTEBOOKS — Checkpoint state
+# ============================================================
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# ============================================================
+# IDEs & EDITORS
+# ============================================================
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ============================================================
+# OS GENERATED FILES
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
