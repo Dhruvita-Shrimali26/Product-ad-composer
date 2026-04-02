@@ -11,6 +11,7 @@
 *.csv
 # Exception: We NEED the cleaned product data for the app to function
 !notebooks/cleaned_product_data.csv
+!flipkart_com-ecommerce_sample.csv
 *.json.gz
 *.parquet
 
