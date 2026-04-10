@@ -199,31 +199,31 @@ def generate_ad_copy_template(product_name: str, category: str, demographic: str
 
     templates = {
         "Teenagers": {
-            "headline": f"{product_name} — Ekdum {kw[0].title()} aur {kw[3].title()}! 🔥",
+            "headline": f"{product_name} — Totally {kw[0].title()} and {kw[3].title()}! 🔥",
             "description": (
-                f"Apna {category.lower()} game level up karo {product_name} ke saath! "
-                f"Ye hai market ka sabse {kw[2]} pick jo aapko baki sabse aage rakhega. "
-                f"Aapke {kw[1]} friends bhi ise hi mang rahe hain."
+                f"Level up your {category.lower()} game with {product_name}! "
+                f"It's the market's {kw[2]} pick that keeps you ahead of the rest. "
+                f"Even your {kw[1]} friends are looking for it."
             ),
             "slogan": f"Be Bold. Be {kw[4].title()}. Be You.",
         },
         "Professionals": {
-            "headline": f"{product_name} — {kw[1].title()} Performance jo aapke kaam aaye",
+            "headline": f"{product_name} — {kw[1].title()} Performance For Your Success",
             "description": (
-                f"Apne {category.lower()} standards ko elevate kariye {product_name} ke saath. "
-                f"Ye un professionals ke liye hai jo {kw[0]} aur {kw[3]} par compromise nahi karte. "
-                f"Aapki success ab aur bhi sleek hogi."
+                f"Elevate your {category.lower()} standards with {product_name}. "
+                f"Built for professionals who don't compromise on {kw[0]} and {kw[3]}. "
+                f"Your workspace just got a lot more sophisticated."
             ),
-            "slogan": f"{kw[1].title()} aur Precision ka Perfect Mix.",
+            "slogan": f"The Perfect Mix of {kw[1].title()} and Precision.",
         },
         "Seniors": {
-            "headline": f"{product_name} — {kw[1].title()}, {kw[0].title()}, aur Sirf Aapke Liye",
+            "headline": f"{product_name} — {kw[1].title()}, {kw[0].title()}, and Just For You",
             "description": (
-                f"Ab experience kariye {product_name} ka asli {kw[3]}. "
-                f"Ise banaya gaya hai simplicity aur {kw[0]} ko dhyan mein rakh kar. "
-                f"Lakho logon ka bharosa aur behatrin {kw[1]} quality."
+                f"Experience the true {kw[3]} of {product_name}. "
+                f"Crafted with simplicity and {kw[0]} in mind. "
+                f"Premium {kw[1]} quality that you can always trust."
             ),
-            "slogan": f"{kw[1].title()} Jis Par Aap Kar Sakein Bharosa.",
+            "slogan": f"{kw[1].title()} You Can Depend On.",
         },
     }
 
